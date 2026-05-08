@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>마이닥터 — 건강 진단</title>
+<style>
+  :root {
+    --green: #2ECC71;
+    --green-light: #E8F8F0;
+    --green-mid: #A8E6C3;
+    --teal: #1ABC9C;
+    --teal-dark: #16A085;
+    --navy: #1A2332;
+    --navy-soft: #2C3E50;
+    --gray-1: #F7F9FC;
+    --gray-2: #EEF2F7;
+    --gray-3: #C8D3E0;
+    --gray-text: #8A97A8;
+    --text: #1A2332;
+    --text-soft: #4A5568;
+    --white: #FFFFFF;
+    --warn: #F59E0B;
+    --warn-light: #FEF3C7;
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --shadow-sm: 0 2px 8px rgba(26,35,50,0.07);
+    --shadow-md: 0 4px 20px rgba(26,35,50,0.10);
+    --shadow-lg: 0 8px 32px rgba(26,35,50,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif;
+    background: var(--gray-1);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ─── SCREEN SYSTEM ─── */
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    transform: translateX(40px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .screen.active {
+    opacity: 1; pointer-events: all;
+    transform: translateX(0);
+  }
+  .screen.exit-left {
+    opacity: 0; transform: translateX(-40px);
+    pointer-events: none;
+  }
+
+  /* ─── SPLASH ─── */
+  #screen-splash {
+    background: linear-gradient(160deg, var(--teal-dark) 0%, var(--teal) 40%, var(--green) 100%);
+    align-items: center; justify-content: center;
+    text-align: center; padding: 48px 32px;
+    overflow: hidden;
+  }
+  .splash-orb {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+  }
+  .splash-orb-1 { width: 300px; height: 300px; top: -80px; right: -80px; }
+  .splash-orb-2 { width: 200px; height: 200px; bottom: 60px; left: -60px; }
+  .splash-orb-3 { width: 100px; height: 100px; top: 40%; right: 20px; }
+
+  .splash-logo {
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.35);
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    margin: 0 auto 24px;
+    backdrop-filter: blur(10px);
+    position: relative;
+  }
+  .splash-app-name {
+    font-size: 32px; font-weight: 800; color: white;
+    letter-spacing: -0.5px; margin-bottom: 8px;
+    position: relative;
+  }
+  .splash-tagline {
+    font-size: 16px; color: rgba(255,255,255,0.8);
+    font-weight: 400; line-height: 1.6;
+    margin-bottom: 48px; position: relative;
+  }
+  .splash-features {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-bottom: 48px; position: relative;
+    width: 100%;
+  }
+  .splash-feat {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px; padding: 14px 16px;
+    backdrop-filter: blur(10px);
+    text-align: left;
+  }
+  .splash-feat-icon { font-size: 24px; }
+  .splash-feat-text { color: white; }
+  .splash-feat-text strong { font-size: 14px; display: block; font-weight: 700; margin-bottom: 2px; }
+  .splash-feat-text span { font-size: 12px; opacity: 0.8; }
+
+  .splash-privacy {
+    font-size: 12px; color: rgba(255,255,255,0.65);
+    position: relative; margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .splash-privacy strong { color: rgba(255,255,255,0.9); }
+
+  .btn-primary {
+    width: 100%; padding: 17px;
+    background: white;
+    color: var(--teal-dark);
+    border: none; border-radius: var(--radius-md);
+    font-size: 16px; font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    letter-spacing: -0.3px;
+  }
+  .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+  .btn-secondary {
+    width: 100%; padding: 15px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.35);
+    color: white; border-radius: var(--radius-md);
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 10px;
+    backdrop-filter: blur(8px);
+    transition: background 0.15s;
+  }
+  .btn-secondary:active { background: rgba(255,255,255,0.25); }
+
+  /* ─── STEP SCREENS ─── */
+  .step-header {
+    padding: 52px 20px 16px;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-2);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .step-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .btn-back {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--gray-1); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--navy);
+    transition: background 0.15s;
+  }
+  .btn-back:active { background: var(--gray-2); }
+  .step-counter { font-size: 13px; color: var(--gray-text); font-weight: 600; }
+  .btn-skip {
+    font-size: 13px; color: var(--gray-text);
+    background: none; border: none; cursor: pointer;
+    padding: 6px 4px; font-weight: 600;
+    transition: color 0.15s;
+  }
+  .btn-skip:active { color: var(--navy); }
+  .btn-skip.hidden { visibility: hidden; }
+
+  .progress-wrap { position: relative; }
+  .progress-bg {
+    height: 4px; background: var(--gray-2); border-radius: 2px; overflow: hidden;
+  }
+  .progress-fg {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--green));
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .time-hint { font-size: 11px; color: var(--gray-text); margin-top: 8px; text-align: center; }
+
+  .step-body { flex: 1; padding: 28px 20px 32px; }
+  .step-question {
+    font-size: 22px; font-weight: 800; color: var(--navy);
+    line-height: 1.35; margin-bottom: 8px; letter-spacing: -0.4px;
+  }
+  .step-desc { font-size: 14px; color: var(--gray-text); line-height: 1.6; margin-bottom: 24px; }
+  .step-desc .multi-hint {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--warn-light); color: #92400E;
+    font-size: 12px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  /* ─── OPTION CARDS ─── */
+  .options-grid { display: flex; flex-direction: column; gap: 10px; }
+  .options-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .option-card {
+    background: var(--white);
+    border: 2px solid var(--gray-2);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34,1.2,0.64,1);
+    display: flex; align-items: center; gap: 14px;
+    position: relative; overflow: hidden;
+  }
+  .option-card:active { transform: scale(0.98); }
+  .option-card.selected {
+    border-color: var(--teal);
+    background: linear-gradient(135deg, #EBF8F5, #E0F5EF);
+    box-shadow: 0 0 0 1px var(--teal);
+  }
+  .option-card.selected .opt-check { opacity: 1; transform: scale(1); }
+
+  .opt-emoji { font-size: 28px; flex-shrink: 0; }
+  .opt-content { flex: 1; min-width: 0; }
+  .opt-label { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+  .opt-sub { font-size: 12px; color: var(--gray-text); line-height: 1.4; }
+
+  .opt-check {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--teal); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+    opacity: 0; transform: scale(0.5);
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  /* 2-column compact */
+  .option-card.compact {
+    flex-direction: column; text-align: center;
+    align-items: center; padding: 18px 12px;
+    gap: 8px;
+  }
+  .option-card.compact .opt-emoji { font-size: 32px; }
+  .option-card.compact .opt-label { font-size: 14px; }
+  .option-card.compact .opt-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 20px; height: 20px; font-size: 11px;
+  }
+
+  /* ─── TOGGLE + INPUT ─── */
+  .toggle-section {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .toggle-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0;
+  }
+  .toggle-label-wrap .toggle-title { font-size: 15px; font-weight: 700; color: var(--navy); }
+  .toggle-label-wrap .toggle-sub { font-size: 12px; color: var(--gray-text); margin-top: 2px; }
+
+  .toggle-switch {
+    width: 48px; height: 28px;
+    background: var(--gray-2);
+    border-radius: 14px; position: relative;
+    cursor: pointer; transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--teal); }
+  .toggle-knob {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: white; position: absolute;
+    top: 3px; left: 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: transform 0.2s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  .toggle-switch.on .toggle-knob { transform: translateX(20px); }
+
+  .toggle-expand {
+    overflow: hidden; max-height: 0;
+    transition: max-height 0.3s ease, margin-top 0.3s;
+  }
+  .toggle-expand.open { max-height: 300px; margin-top: 14px; }
+
+  .tag-input-area {
+    min-height: 52px;
+    border: 1.5px solid var(--gray-2); border-radius: 12px;
+    padding: 10px 12px;
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    cursor: text; background: var(--gray-1);
+    transition: border-color 0.15s;
+  }
+  .tag-input-area:focus-within { border-color: var(--teal); background: white; }
+  .tag-pill {
+    background: var(--teal); color: white;
+    font-size: 13px; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 4px;
+    cursor: pointer;
+    animation: popIn 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .tag-pill .remove { font-size: 14px; opacity: 0.7; }
+  .tag-real-input {
+    border: none; background: none; outline: none;
+    font-size: 14px; color: var(--navy);
+    font-family: inherit; flex: 1; min-width: 80px;
+  }
+  .tag-hint { font-size: 12px; color: var(--gray-text); margin-top: 8px; }
+
+  /* ─── FREE TEXT AREA ─── */
+  textarea {
+    width: 100%;
+    border: 1.5px solid var(--gray-2);
+    border-radius: 12px; padding: 14px;
+    font-size: 14px; font-family: inherit;
+    color: var(--navy); resize: none;
+    outline: none; background: white;
+    transition: border-color 0.15s;
+    line-height: 1.6;
+  }
+  textarea:focus { border-color: var(--teal); }
+
+  /* ─── AGE / GENDER STEP ─── */
+  .gender-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .age-scroll { display: flex; flex-wrap: wrap; gap: 8px; }
+  .age-chip {
+    padding: 10px 18px;
+    border: 2px solid var(--gray-2); border-radius: 20px;
+    font-size: 14px; font-weight: 600; color: var(--text-soft);
+    cursor: pointer; background: white;
+    transition: all 0.2s cubic-bezier(0.34,1.2,0.64,1);
+  }
+  .age-chip.selected {
+    border-color: var(--teal); background: var(--green-light);
+    color: var(--teal-dark);
+    box-shadow: 0 0 0 1px var(--teal);
+  }
+
+  /* ─── STEP FOOTER ─── */
+  .step-footer {
+    padding: 16px 20px 36px;
+    background: var(--white);
+    border-top: 1px solid var(--gray-2);
+  }
+  .btn-next {
+    width: 100%; padding: 17px;
+    background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+    color: white; border: none; border-radius: var(--radius-md);
+    font-size: 16px; font-weight: 800; cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 4px 16px rgba(26,188,156,0.35);
+    letter-spacing: -0.3px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-next:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(26,188,156,0.2); }
+  .btn-next:disabled {
+    background: var(--gray-2); color: var(--gray-text);
+    box-shadow: none; cursor: not-allowed;
+  }
+
+  /* ─── LOADING SCREEN ─── */
+  #screen-loading {
+    background: linear-gradient(160deg, var(--teal-dark), var(--teal) 50%, var(--green));
+    align-items: center; justify-content: center; text-align: center;
+    padding: 48px 32px;
+  }
+  .loading-orb-wrap { position: relative; width: 120px; height: 120px; margin: 0 auto 32px; }
+  .loading-orb {
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 52px;
+    border: 2px solid rgba(255,255,255,0.3);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(255,255,255,0); }
+  }
+  .loading-ring {
+    position: absolute; inset: -8px;
+    border: 3px solid transparent;
+    border-top-color: rgba(255,255,255,0.6);
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-title { font-size: 22px; font-weight: 800; color: white; margin-bottom: 10px; }
+  .loading-sub { font-size: 15px; color: rgba(255,255,255,0.8); margin-bottom: 32px; line-height: 1.6; }
+
+  .loading-steps { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+  .loading-step {
+    background: rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    opacity: 0; transform: translateY(10px);
+    transition: all 0.5s;
+  }
+  .loading-step.visible { opacity: 1; transform: translateY(0); }
+  .loading-step .l-icon { font-size: 20px; }
+  .loading-step .l-text { font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 500; flex: 1; text-align: left; }
+  .loading-step .l-check { font-size: 16px; opacity: 0; transition: opacity 0.3s; }
+  .loading-step .l-check.done { opacity: 1; }
+  .loading-step .l-spinner {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-bar-wrap { width: 100%; background: rgba(255,255,255,0.2); border-radius: 4px; height: 6px; overflow: hidden; }
+  .loading-bar-fill { height: 100%; background: white; border-radius: 4px; width: 0; transition: width 0.5s; }
+
+  /* ─── RESULT SCREEN ─── */
+  #screen-result {
+    background: var(--gray-1);
+    overflow-y: auto;
+  }
+  .result-hero {
+    background: linear-gradient(135deg, var(--teal-dark), var(--teal) 60%, var(--green));
+    padding: 52px 20px 32px; color: white; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .result-hero::before {
+    content: ''; position: absolute;
+    top: -60px; right: -60px; width: 200px; height: 200px;
+    background: rgba(255,255,255,0.07); border-radius: 50%;
+  }
+  .result-check-anim {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin: 0 auto 16px;
+    animation: bounceIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.2s both;
+  }
+  @keyframes bounceIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .result-hero h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .result-hero p { font-size: 14px; opacity: 0.85; line-height: 1.6; }
+
+  .result-score-row {
+    display: flex; gap: 10px; margin-top: 20px; position: relative;
+  }
+  .result-score-chip {
+    flex: 1; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 12px; padding: 12px 8px; text-align: center;
+    backdrop-filter: blur(8px);
+  }
+  .result-score-chip .chip-val { font-size: 20px; font-weight: 800; display: block; }
+  .result-score-chip .chip-lbl { font-size: 11px; opacity: 0.8; }
+
+  .result-body { padding: 20px; }
+  .result-section-title {
+    font-size: 16px; font-weight: 800; color: var(--navy);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .result-section-title .badge-chip {
+    font-size: 11px; padding: 3px 8px; border-radius: 20px;
+    background: var(--green-light); color: var(--teal-dark); font-weight: 700;
+  }
+
+  /* Routine plan */
+  .routine-plan { background: var(--white); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 20px; }
+  .routine-time-block { padding: 16px; border-bottom: 1px solid var(--gray-2); }
+  .routine-time-block:last-child { border-bottom: none; }
+  .rtime-label { font-size: 12px; font-weight: 700; color: var(--teal); margin-bottom: 10px; display: flex; align-items: center; gap: 4px; }
+  .ritem { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+  .ritem-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+  .ritem-name { font-size: 14px; font-weight: 600; color: var(--navy); }
+  .ritem-reason { font-size: 12px; color: var(--gray-text); }
+
+  /* Result rec cards */
+  .result-rec-card {
+    background: var(--white); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+    padding: 16px; margin-bottom: 12px; cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .result-rec-card:active { border-color: var(--teal); }
+  .rcard-top { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+  .rcard-img { width: 56px; height: 56px; background: var(--gray-1); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+  .rcard-meta { flex: 1; }
+  .rcard-name { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+  .rcard-brand { font-size: 12px; color: var(--gray-text); }
+  .rcard-price { font-size: 15px; font-weight: 800; color: var(--navy); margin-top: 4px; }
+  .rcard-budget-ok { font-size: 11px; color: var(--teal); font-weight: 600; background: var(--green-light); padding: 2px 8px; border-radius: 6px; display: inline-block; margin-top: 4px; }
+
+  .rcard-reason { font-size: 13px; line-height: 1.6; color: var(--navy-soft); background: var(--green-light); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .rcard-ingredients { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+  .rcard-ing { font-size: 11px; background: var(--gray-2); color: var(--text-soft); padding: 3px 8px; border-radius: 6px; font-weight: 500; }
+  .rcard-social { font-size: 12px; color: var(--gray-text); display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+  .mini-avs { display: flex; }
+  .mini-avs span { width: 22px; height: 22px; border-radius: 50%; background: var(--green-mid); border: 2px solid white; margin-left: -6px; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+  .mini-avs span:first-child { margin-left: 0; }
+
+  .rcard-cta {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+    color: white; border: none; border-radius: 12px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .rcard-cta:active { opacity: 0.85; }
+
+  /* Summary profile */
+  .profile-summary { background: var(--white); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 16px; margin-bottom: 20px; }
+  .profile-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gray-2); }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-icon { font-size: 18px; width: 28px; text-align: center; }
+  .profile-key { font-size: 12px; color: var(--gray-text); font-weight: 500; width: 72px; flex-shrink: 0; }
+  .profile-val { font-size: 13px; font-weight: 600; color: var(--navy); flex: 1; }
+
+  /* Disclaimer */
+  .result-disclaimer { background: var(--gray-2); border-radius: 12px; padding: 12px 14px; font-size: 11px; color: var(--gray-text); line-height: 1.7; display: flex; gap: 6px; margin-bottom: 20px; }
+
+  /* CTA block */
+  .cta-block { margin-bottom: 16px; }
+  .cta-main {
+    width: 100%; padding: 17px;
+    background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+    color: white; border: none; border-radius: var(--radius-md);
+    font-size: 16px; font-weight: 800; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(26,188,156,0.35);
+    margin-bottom: 10px; transition: transform 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .cta-main:active { transform: scale(0.98); }
+  .cta-skip-to-home {
+    width: 100%; padding: 14px;
+    background: var(--gray-1); border: 1.5px solid var(--gray-2);
+    color: var(--gray-text); border-radius: var(--radius-md);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .cta-skip-to-home:active { background: var(--gray-2); }
+
+  /* ─── LOGIN SCREEN ─── */
+  #screen-login {
+    background: var(--white);
+    align-items: center; justify-content: flex-start;
+    padding-top: 0;
+  }
+  .login-top {
+    width: 100%;
+    padding: 52px 20px 28px;
+    background: linear-gradient(160deg, var(--teal-dark), var(--teal) 60%, var(--green));
+    text-align: center; color: white;
+    position: relative; overflow: hidden;
+  }
+  .login-top::before {
+    content: ''; position: absolute; top: -50px; right: -50px;
+    width: 160px; height: 160px; background: rgba(255,255,255,0.07); border-radius: 50%;
+  }
+  .login-preview-card {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 16px; padding: 16px; margin: 20px 0 0;
+    backdrop-filter: blur(10px); text-align: left;
+    position: relative; overflow: hidden;
+  }
+  .blur-overlay {
+    position: absolute; inset: 0;
+    backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.1);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .blur-overlay span { font-size: 13px; color: white; font-weight: 700; text-align: center; line-height: 1.5; }
+  .preview-rec { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .preview-rec:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,0.15); }
+  .prev-img { font-size: 24px; }
+  .prev-name { font-size: 13px; font-weight: 700; color: white; }
+  .prev-reason { font-size: 11px; color: rgba(255,255,255,0.7); }
+
+  .login-bottom { flex: 1; width: 100%; padding: 28px 20px 40px; }
+  .login-title { font-size: 22px; font-weight: 800; color: var(--navy); margin-bottom: 6px; line-height: 1.3; }
+  .login-sub { font-size: 14px; color: var(--gray-text); margin-bottom: 28px; line-height: 1.6; }
+
+  .social-btn {
+    width: 100%; padding: 15px;
+    border-radius: 14px; border: none;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 10px; transition: opacity 0.15s, transform 0.15s;
+  }
+  .social-btn:active { opacity: 0.85; transform: scale(0.99); }
+  .social-btn.kakao { background: #FEE500; color: #191919; }
+  .social-btn.naver { background: #03C75A; color: white; }
+  .social-btn.google { background: white; color: var(--navy); border: 1.5px solid var(--gray-2); box-shadow: var(--shadow-sm); }
+
+  .social-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+  .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-2); }
+  .divider span { font-size: 12px; color: var(--gray-text); }
+
+  .btn-email {
+    width: 100%; padding: 14px;
+    border: 1.5px solid var(--gray-2); border-radius: 14px;
+    background: var(--gray-1); color: var(--text-soft);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-email:active { background: var(--gray-2); }
+
+  .login-terms { font-size: 11px; color: var(--gray-text); text-align: center; margin-top: 20px; line-height: 1.7; }
+  .login-terms a { color: var(--teal); text-decoration: none; font-weight: 600; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: var(--navy); color: white;
+    font-size: 13px; font-weight: 600;
+    padding: 10px 20px; border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none; white-space: nowrap; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ══ SPLASH ══ -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-orb splash-orb-1"></div>
+  <div class="splash-orb splash-orb-2"></div>
+  <div class="splash-orb splash-orb-3"></div>
+
+  <div class="splash-logo">🌿</div>
+  <div class="splash-app-name">마이닥터</div>
+  <div class="splash-tagline">약사한테 물어보는 것처럼 믿을 수 있고<br>내 생활에 맞게 움직여주는 AI 건강 파트너</div>
+
+  <div class="splash-features">
+    <div class="splash-feat">
+      <div class="splash-feat-icon">🩺</div>
+      <div class="splash-feat-text">
+        <strong>AI 맞춤 건강 진단</strong>
+        <span>내 생활 패턴 분석 → 맞춤 영양제 처방</span>
+      </div>
+    </div>
+    <div class="splash-feat">
+      <div class="splash-feat-icon">🔁</div>
+      <div class="splash-feat-text">
+        <strong>루틴 코치</strong>
+        <span>알아서 챙겨주는 복용 알림 & 습관 형성</span>
+      </div>
+    </div>
+    <div class="splash-feat">
+      <div class="splash-feat-icon">🛡️</div>
+      <div class="splash-feat-text">
+        <strong>데이터 보안 약속</strong>
+        <span>건강 정보는 광고에 절대 사용되지 않아요</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="splash-privacy">
+    ✓ 건강 데이터는 암호화 저장됩니다<br>
+    ✓ <strong>광고 목적 활용 절대 금지</strong>
+  </div>
+
+  <button class="btn-primary" onclick="goTo('screen-step1')">
+    3분 만에 내 건강 진단 시작하기 →
+  </button>
+  <button class="btn-secondary" onclick="goToMain()">
+    이미 계정이 있어요
+  </button>
+</div>
+
+
+<!-- ══ STEP 1: 건강 목표 ══ -->
+<div class="screen" id="screen-step1">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-splash')">←</button>
+      <span class="step-counter">1 / 10</span>
+      <button class="btn-skip hidden">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:10%"></div></div>
+    <div class="time-hint">⏱ 약 3분 소요</div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">어떤 건강 목표가 있으신가요?</div>
+    <div class="step-desc">
+      <span class="multi-hint">✦ 최대 2개 선택</span>
+      &nbsp;가장 중요한 것을 골라주세요
+    </div>
+    <div class="options-2col" id="goals-grid">
+      <div class="option-card compact" onclick="toggleMulti(this,'goals',2)">
+        <div class="opt-emoji">⚡</div>
+        <div class="opt-label">피로 회복</div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card compact" onclick="toggleMulti(this,'goals',2)">
+        <div class="opt-emoji">😴</div>
+        <div class="opt-label">수면 개선</div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card compact" onclick="toggleMulti(this,'goals',2)">
+        <div class="opt-emoji">✨</div>
+        <div class="opt-label">피부 관리</div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card compact" onclick="toggleMulti(this,'goals',2)">
+        <div class="opt-emoji">⚖️</div>
+        <div class="opt-label">체중 관리</div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card compact" onclick="toggleMulti(this,'goals',2)">
+        <div class="opt-emoji">🛡️</div>
+        <div class="opt-label">면역 강화</div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card compact" onclick="toggleMulti(this,'goals',2)">
+        <div class="opt-emoji">🧠</div>
+        <div class="opt-label">집중력 향상</div>
+        <div class="opt-check">✓</div>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" id="next-step1" onclick="goTo('screen-step2')" disabled>
+      다음 →
+    </button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 2: 나이 + 성별 ══ -->
+<div class="screen" id="screen-step2">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step1')">←</button>
+      <span class="step-counter">2 / 10</span>
+      <button class="btn-skip hidden">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:20%"></div></div>
+    <div class="time-hint">⏱ 약 2분 30초 남음</div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">나이대와 성별을 알려주세요</div>
+    <div class="step-desc">영양 필요량이 달라져요</div>
+    <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;">성별</div>
+    <div class="gender-row">
+      <div class="option-card compact" onclick="toggleSingle(this,'gender')">
+        <div class="opt-emoji">♀️</div>
+        <div class="opt-label">여성</div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card compact" onclick="toggleSingle(this,'gender')">
+        <div class="opt-emoji">♂️</div>
+        <div class="opt-label">남성</div>
+        <div class="opt-check">✓</div>
+      </div>
+    </div>
+    <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px;">나이대</div>
+    <div class="age-scroll" id="age-chips">
+      <button class="age-chip" onclick="toggleAgeChip(this)">10대</button>
+      <button class="age-chip" onclick="toggleAgeChip(this)">20대 초반</button>
+      <button class="age-chip" onclick="toggleAgeChip(this)">20대 후반</button>
+      <button class="age-chip" onclick="toggleAgeChip(this)">30대 초반</button>
+      <button class="age-chip" onclick="toggleAgeChip(this)">30대 후반</button>
+      <button class="age-chip" onclick="toggleAgeChip(this)">40대</button>
+      <button class="age-chip" onclick="toggleAgeChip(this)">50대 이상</button>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" id="next-step2" onclick="goTo('screen-step3')" disabled>다음 →</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 3: 고민 증상 ══ -->
+<div class="screen" id="screen-step3">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step2')">←</button>
+      <span class="step-counter">3 / 10</span>
+      <button class="btn-skip hidden">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:30%"></div></div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">요즘 주로 느끼는 증상이 있나요?</div>
+    <div class="step-desc"><span class="multi-hint">✦ 해당하는 것 모두 선택</span></div>
+    <div class="options-grid" id="symptoms-grid">
+      <div class="option-card" onclick="toggleMulti(this,'symptoms',99)">
+        <div class="opt-emoji">😩</div>
+        <div class="opt-content"><div class="opt-label">만성 피로 · 무기력</div><div class="opt-sub">늘 피곤하고 에너지가 없어요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleMulti(this,'symptoms',99)">
+        <div class="opt-emoji">🌙</div>
+        <div class="opt-content"><div class="opt-label">수면 불량</div><div class="opt-sub">잠들기 어렵거나 자주 깨요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleMulti(this,'symptoms',99)">
+        <div class="opt-emoji">🤢</div>
+        <div class="opt-content"><div class="opt-label">소화 불량 · 더부룩함</div><div class="opt-sub">식후 불편함이 자주 있어요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleMulti(this,'symptoms',99)">
+        <div class="opt-emoji">💧</div>
+        <div class="opt-content"><div class="opt-label">붓기</div><div class="opt-sub">아침에 특히 얼굴·다리가 부어요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleMulti(this,'symptoms',99)">
+        <div class="opt-emoji">🔴</div>
+        <div class="opt-content"><div class="opt-label">피부 트러블</div><div class="opt-sub">여드름, 건조함, 칙칙함</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleMulti(this,'symptoms',99)">
+        <div class="opt-emoji">🧊</div>
+        <div class="opt-content"><div class="opt-label">면역력 저하</div><div class="opt-sub">자주 감기에 걸리거나 회복이 느려요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" onclick="goTo('screen-step4')">다음 →</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 4: 식사 패턴 ══ -->
+<div class="screen" id="screen-step4">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step3')">←</button>
+      <span class="step-counter">4 / 10</span>
+      <button class="btn-skip hidden">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:40%"></div></div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">평소 식사 패턴이 어때요?</div>
+    <div class="step-desc">영양 결핍 패턴 파악에 도움돼요</div>
+    <div class="options-grid" id="diet-grid">
+      <div class="option-card" onclick="toggleSingle(this,'diet')">
+        <div class="opt-emoji">🍽️</div>
+        <div class="opt-content"><div class="opt-label">규칙적 (3끼 챙겨먹는 편)</div><div class="opt-sub">아침·점심·저녁 거르지 않아요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'diet')">
+        <div class="opt-emoji">🏢</div>
+        <div class="opt-content"><div class="opt-label">불규칙 · 외식 위주</div><div class="opt-sub">바빠서 끼니를 자주 건너뛰어요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'diet')">
+        <div class="opt-emoji">🥗</div>
+        <div class="opt-content"><div class="opt-label">채식 · 건강식 위주</div><div class="opt-sub">야채·과일 위주로 먹어요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'diet')">
+        <div class="opt-emoji">📦</div>
+        <div class="opt-content"><div class="opt-label">불규칙 · 배달·인스턴트 위주</div><div class="opt-sub">배달음식이나 편의점을 자주 이용해요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" id="next-step4" onclick="goTo('screen-step5')" disabled>다음 →</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 5: 수면 ══ -->
+<div class="screen" id="screen-step5">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step4')">←</button>
+      <span class="step-counter">5 / 10</span>
+      <button class="btn-skip hidden">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:50%"></div></div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">하루 평균 수면 시간이 어떻게 돼요?</div>
+    <div class="step-desc">수면 패턴에 맞는 영양제를 추천해드려요</div>
+    <div class="options-grid" id="sleep-grid">
+      <div class="option-card" onclick="toggleSingle(this,'sleep')">
+        <div class="opt-emoji">😌</div>
+        <div class="opt-content"><div class="opt-label">7시간 이상</div><div class="opt-sub">충분히 자는 편이에요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'sleep')">
+        <div class="opt-emoji">😐</div>
+        <div class="opt-content"><div class="opt-label">5~7시간</div><div class="opt-sub">약간 부족한 편이에요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'sleep')">
+        <div class="opt-emoji">😵</div>
+        <div class="opt-content"><div class="opt-label">5시간 미만</div><div class="opt-sub">만성 수면 부족 상태예요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" id="next-step5" onclick="goTo('screen-step6')" disabled>다음 →</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 6: 운동 빈도 ══ -->
+<div class="screen" id="screen-step6">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step5')">←</button>
+      <span class="step-counter">6 / 10</span>
+      <button class="btn-skip hidden">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:60%"></div></div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">운동은 얼마나 자주 하세요?</div>
+    <div class="step-desc">운동 강도에 따라 필요 영양소가 달라요</div>
+    <div class="options-grid" id="exercise-grid">
+      <div class="option-card" onclick="toggleSingle(this,'exercise')">
+        <div class="opt-emoji">🏃</div>
+        <div class="opt-content"><div class="opt-label">주 3회 이상</div><div class="opt-sub">꾸준히 운동하는 편이에요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'exercise')">
+        <div class="opt-emoji">🚶</div>
+        <div class="opt-content"><div class="opt-label">주 1~2회</div><div class="opt-sub">가끔 운동해요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'exercise')">
+        <div class="opt-emoji">🛋️</div>
+        <div class="opt-content"><div class="opt-label">거의 안 해요</div><div class="opt-sub">주로 앉아서 생활해요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" id="next-step6" onclick="goTo('screen-step7')" disabled>다음 →</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 7: 현재 복용 중인 영양제 ══ -->
+<div class="screen" id="screen-step7">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step6')">←</button>
+      <span class="step-counter">7 / 10</span>
+      <button class="btn-skip" onclick="goTo('screen-step8')">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:70%"></div></div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">현재 먹고 있는 영양제가 있나요?</div>
+    <div class="step-desc">성분 중복 여부를 확인해 안전한 조합을 추천해드려요</div>
+
+    <div class="toggle-section">
+      <div class="toggle-row">
+        <div class="toggle-label-wrap">
+          <div class="toggle-title">💊 현재 복용 중인 영양제 있음</div>
+          <div class="toggle-sub">있으면 켜고 입력해주세요</div>
+        </div>
+        <div class="toggle-switch" id="toggle-supp" onclick="toggleSwitch('toggle-supp','expand-supp')">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+      <div class="toggle-expand" id="expand-supp">
+        <div class="tag-input-area" id="supp-tag-area" onclick="focusTagInput('supp-input')">
+          <span class="tag-pill" style="display:none">비타민 C<span class="remove" onclick="removeTag(this)"> ×</span></span>
+          <input class="tag-real-input" id="supp-input" placeholder="영양제 이름 입력 후 엔터" onkeydown="addTag(event,'supp-tag-area','supp-input')">
+        </div>
+        <div class="tag-hint">예: 비타민 C, 오메가3, 마그네슘, 유산균 등</div>
+
+        <div style="margin-top:14px;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">자주 먹는 영양제 (탭해서 추가)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;" id="quick-supps">
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('비타민 C','supp-tag-area')">비타민 C</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('비타민 D','supp-tag-area')">비타민 D</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('오메가-3','supp-tag-area')">오메가-3</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('마그네슘','supp-tag-area')">마그네슘</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('유산균','supp-tag-area')">유산균</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('철분','supp-tag-area')">철분</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('아연','supp-tag-area')">아연</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('종합비타민','supp-tag-area')">종합비타민</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('콜라겐','supp-tag-area')">콜라겐</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" onclick="goTo('screen-step8')">다음 →</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 8: 알레르기 ══ -->
+<div class="screen" id="screen-step8">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step7')">←</button>
+      <span class="step-counter">8 / 10</span>
+      <button class="btn-skip" onclick="goTo('screen-step9')">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:80%"></div></div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">알레르기나 특이 체질이 있나요?</div>
+    <div class="step-desc">안전한 추천을 위해 꼭 확인해요</div>
+
+    <div class="toggle-section">
+      <div class="toggle-row">
+        <div class="toggle-label-wrap">
+          <div class="toggle-title">⚠️ 알레르기 / 특이 체질 있음</div>
+          <div class="toggle-sub">있으면 켜고 입력해주세요</div>
+        </div>
+        <div class="toggle-switch" id="toggle-allergy" onclick="toggleSwitch('toggle-allergy','expand-allergy')">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+      <div class="toggle-expand" id="expand-allergy">
+        <div class="tag-input-area" id="allergy-tag-area" onclick="focusTagInput('allergy-input')">
+          <input class="tag-real-input" id="allergy-input" placeholder="알레르기 성분 입력 후 엔터" onkeydown="addTag(event,'allergy-tag-area','allergy-input')">
+        </div>
+        <div class="tag-hint">예: 대두, 견과류, 유제품, 글루텐 등</div>
+
+        <div style="margin-top:14px;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">자주 있는 알레르기</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('대두','allergy-tag-area')">대두</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('견과류','allergy-tag-area')">견과류</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('유제품','allergy-tag-area')">유제품</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('글루텐','allergy-tag-area')">글루텐</button>
+          <button class="age-chip" style="font-size:12px;" onclick="quickAddTag('새우·조개','allergy-tag-area')">새우·조개</button>
+        </div>
+        <div style="margin-top:12px;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;">기타 참고 사항</div>
+        <textarea rows="3" placeholder="예: 임신 중, 신장 질환, 약물 복용 중 등 추가로 알려주실 내용이 있으면 자유롭게 적어주세요"></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" onclick="goTo('screen-step9')">다음 →</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 9: 예산 ══ -->
+<div class="screen" id="screen-step9">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step8')">←</button>
+      <span class="step-counter">9 / 10</span>
+      <button class="btn-skip hidden">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:90%"></div></div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">영양제에 쓸 수 있는 월 예산은요?</div>
+    <div class="step-desc">예산 안에서 최적 조합을 추천해드려요</div>
+    <div class="options-grid" id="budget-grid">
+      <div class="option-card" onclick="toggleSingle(this,'budget')">
+        <div class="opt-emoji">🪙</div>
+        <div class="opt-content"><div class="opt-label">1만원 미만</div><div class="opt-sub">부담 없이 시작하고 싶어요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'budget')">
+        <div class="opt-emoji">💰</div>
+        <div class="opt-content"><div class="opt-label">1~3만원</div><div class="opt-sub">적당히 챙기고 싶어요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'budget')">
+        <div class="opt-emoji">💎</div>
+        <div class="opt-content"><div class="opt-label">3~5만원</div><div class="opt-sub">효과 있으면 투자할 수 있어요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'budget')">
+        <div class="opt-emoji">🏆</div>
+        <div class="opt-content"><div class="opt-label">5만원 이상</div><div class="opt-sub">건강이 최우선이에요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" id="next-step9" onclick="goTo('screen-step10')" disabled>다음 →</button>
+  </div>
+</div>
+
+
+<!-- ══ STEP 10: 생활 패턴 ══ -->
+<div class="screen" id="screen-step10">
+  <div class="step-header">
+    <div class="step-nav">
+      <button class="btn-back" onclick="goTo('screen-step9')">←</button>
+      <span class="step-counter">10 / 10</span>
+      <button class="btn-skip" onclick="startAnalysis()">건너뛰기</button>
+    </div>
+    <div class="progress-bg"><div class="progress-fg" style="width:100%"></div></div>
+    <div class="time-hint">🎉 마지막 단계예요!</div>
+  </div>
+  <div class="step-body" style="flex:1;overflow-y:auto;">
+    <div class="step-question">주로 어떤 생활 패턴이에요?</div>
+    <div class="step-desc">루틴 알림 시간 최적화에 활용돼요</div>
+    <div class="options-grid" id="lifestyle-grid">
+      <div class="option-card" onclick="toggleSingle(this,'lifestyle')">
+        <div class="opt-emoji">🌅</div>
+        <div class="opt-content"><div class="opt-label">아침형 인간</div><div class="opt-sub">일찍 일어나고 일찍 자요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'lifestyle')">
+        <div class="opt-emoji">🌙</div>
+        <div class="opt-content"><div class="opt-label">저녁형 인간</div><div class="opt-sub">늦게 자고 늦게 일어나요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+      <div class="option-card" onclick="toggleSingle(this,'lifestyle')">
+        <div class="opt-emoji">🌀</div>
+        <div class="opt-content"><div class="opt-label">불규칙</div><div class="opt-sub">매일 달라요</div></div>
+        <div class="opt-check">✓</div>
+      </div>
+    </div>
+  </div>
+  <div class="step-footer">
+    <button class="btn-next" id="next-step10" onclick="startAnalysis()" disabled>
+      AI 분석 시작하기 ✨
+    </button>
+  </div>
+</div>
+
+
+<!-- ══ LOADING ══ -->
+<div class="screen" id="screen-loading">
+  <div class="loading-orb-wrap">
+    <div class="loading-orb">🤖</div>
+    <div class="loading-ring"></div>
+  </div>
+  <div class="loading-title">건강 데이터 분석 중</div>
+  <div class="loading-sub">입력하신 정보를 바탕으로<br>맞춤 영양 루틴을 만들고 있어요</div>
+
+  <div class="loading-steps" id="loading-steps">
+    <div class="loading-step" id="lstep1">
+      <div class="l-icon">🔍</div>
+      <div class="l-text">건강 패턴 분석 중...</div>
+      <div class="l-spinner"></div>
+      <div class="l-check done" style="display:none">✅</div>
+    </div>
+    <div class="loading-step" id="lstep2">
+      <div class="l-icon">🧬</div>
+      <div class="l-text">영양 결핍 항목 추출 중...</div>
+      <div class="l-spinner"></div>
+      <div class="l-check done" style="display:none">✅</div>
+    </div>
+    <div class="loading-step" id="lstep3">
+      <div class="l-icon">💊</div>
+      <div class="l-text">맞춤 영양제 조합 생성 중...</div>
+      <div class="l-spinner"></div>
+      <div class="l-check done" style="display:none">✅</div>
+    </div>
+    <div class="loading-step" id="lstep4">
+      <div class="l-icon">🗓️</div>
+      <div class="l-text">복용 루틴 스케줄링...</div>
+      <div class="l-spinner"></div>
+      <div class="l-check done" style="display:none">✅</div>
+    </div>
+  </div>
+
+  <div class="loading-bar-wrap">
+    <div class="loading-bar-fill" id="loading-bar"></div>
+  </div>
+</div>
+
+
+<!-- ══ RESULT ══ -->
+<div class="screen" id="screen-result">
+  <div class="result-hero">
+    <div class="result-check-anim">🎯</div>
+    <h2>맞춤 루틴 완성!</h2>
+    <p>4가지 영양소 부족 발견<br>최적 루틴을 구성했어요</p>
+    <div class="result-score-row">
+      <div class="result-score-chip">
+        <span class="chip-val">72</span>
+        <span class="chip-lbl">현재 건강점수</span>
+      </div>
+      <div class="result-score-chip">
+        <span class="chip-val">3개</span>
+        <span class="chip-lbl">추천 영양제</span>
+      </div>
+      <div class="result-score-chip">
+        <span class="chip-val">₩26K</span>
+        <span class="chip-lbl">예산 내 구성</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-body">
+
+    <!-- 내 건강 프로필 요약 -->
+    <div class="result-section-title">내 건강 프로필</div>
+    <div class="profile-summary">
+      <div class="profile-row"><div class="profile-icon">🎯</div><div class="profile-key">건강 목표</div><div class="profile-val" id="summary-goals">—</div></div>
+      <div class="profile-row"><div class="profile-icon">🍽️</div><div class="profile-key">식사 패턴</div><div class="profile-val" id="summary-diet">—</div></div>
+      <div class="profile-row"><div class="profile-icon">😴</div><div class="profile-key">수면</div><div class="profile-val" id="summary-sleep">—</div></div>
+      <div class="profile-row"><div class="profile-icon">🏃</div><div class="profile-key">운동</div><div class="profile-val" id="summary-exercise">—</div></div>
+      <div class="profile-row"><div class="profile-icon">💰</div><div class="profile-key">예산</div><div class="profile-val" id="summary-budget">—</div></div>
+    </div>
+
+    <!-- 오늘의 루틴 -->
+    <div class="result-section-title">
+      AI 추천 루틴
+      <span class="badge-chip">복용 시간대별</span>
+    </div>
+    <div class="routine-plan">
+      <div class="routine-time-block">
+        <div class="rtime-label">🌅 아침 — 식후</div>
+        <div class="ritem"><div class="ritem-dot"></div><div><div class="ritem-name">비타민 B 컴플렉스</div><div class="ritem-reason">피로·집중력 개선</div></div></div>
+        <div class="ritem"><div class="ritem-dot"></div><div><div class="ritem-name">비타민 C 1000mg</div><div class="ritem-reason">면역·피부 보호</div></div></div>
+      </div>
+      <div class="routine-time-block">
+        <div class="rtime-label">☀️ 점심 — 식사와 함께</div>
+        <div class="ritem"><div class="ritem-dot"></div><div><div class="ritem-name">오메가-3</div><div class="ritem-reason">지용성 흡수를 위해 식사 중 복용</div></div></div>
+      </div>
+      <div class="routine-time-block">
+        <div class="rtime-label">🌙 저녁 — 취침 1시간 전</div>
+        <div class="ritem"><div class="ritem-dot"></div><div><div class="ritem-name">마그네슘 400mg</div><div class="ritem-reason">수면 개선·근육 이완</div></div></div>
+      </div>
+    </div>
+
+    <!-- 추천 영양제 카드 -->
+    <div class="result-section-title">
+      추천 영양제
+      <span class="badge-chip">근거 포함</span>
+    </div>
+
+    <div class="result-rec-card">
+      <div class="rcard-top">
+        <div class="rcard-img">⚡</div>
+        <div class="rcard-meta">
+          <div class="rcard-name">나우푸드 비타민 B-100</div>
+          <div class="rcard-brand">NOW Foods</div>
+          <div class="rcard-price">₩14,900</div>
+          <div class="rcard-budget-ok">✓ 예산 내</div>
+        </div>
+      </div>
+      <div class="rcard-reason">💡 <strong>수면 부족 + 만성 피로</strong> → 비타민 B군이 에너지 대사 효소로 직접 작용해 피로 해소에 효과적이에요</div>
+      <div class="rcard-ingredients">
+        <span class="rcard-ing">B1 100mg</span><span class="rcard-ing">B2 100mg</span><span class="rcard-ing">B6 100mg</span><span class="rcard-ing">B12 100mcg</span>
+      </div>
+      <div class="rcard-social">
+        <div class="mini-avs"><span>👩</span><span>👩</span><span>👤</span></div>
+        나와 유사한 유저 <strong>87%</strong> 2주 내 효과 체감
+      </div>
+      <button class="rcard-cta" onclick="showToast('구매 페이지로 이동')">구매하러 가기 →</button>
+    </div>
+
+    <div class="result-rec-card">
+      <div class="rcard-top">
+        <div class="rcard-img">🌊</div>
+        <div class="rcard-meta">
+          <div class="rcard-name">닥터베스트 오메가-3 고함량</div>
+          <div class="rcard-brand">Doctor's Best</div>
+          <div class="rcard-price">₩24,500</div>
+          <div class="rcard-budget-ok">✓ 예산 내</div>
+        </div>
+      </div>
+      <div class="rcard-reason">💡 <strong>배달음식 위주 식사</strong> → EPA·DHA 섭취량이 극히 부족할 가능성이 높아요. 피부·집중력 동시 케어 가능해요</div>
+      <div class="rcard-ingredients">
+        <span class="rcard-ing">EPA 600mg</span><span class="rcard-ing">DHA 400mg</span>
+      </div>
+      <div class="rcard-social">
+        <div class="mini-avs"><span>👤</span><span>👩</span><span>👤</span></div>
+        유사 유저 <strong>76%</strong> 피부 개선 후기
+      </div>
+      <button class="rcard-cta" onclick="showToast('구매 페이지로 이동')">구매하러 가기 →</button>
+    </div>
+
+    <div class="result-rec-card">
+      <div class="rcard-top">
+        <div class="rcard-img">⚪</div>
+        <div class="rcard-meta">
+          <div class="rcard-name">나우푸드 마그네슘 400mg</div>
+          <div class="rcard-brand">NOW Foods</div>
+          <div class="rcard-price">₩18,900</div>
+          <div class="rcard-budget-ok">✓ 예산 내</div>
+        </div>
+      </div>
+      <div class="rcard-reason">💡 <strong>수면 5시간 미만 + 스트레스</strong> → 마그네슘은 신경 안정·수면 호르몬(멜라토닌) 생성에 필수적이에요</div>
+      <div class="rcard-ingredients">
+        <span class="rcard-ing">마그네슘 400mg</span><span class="rcard-ing">산화마그네슘</span>
+      </div>
+      <div class="rcard-social">
+        <div class="mini-avs"><span>👩</span><span>👩</span><span>👤</span></div>
+        유사 유저 <strong>89%</strong> 수면 개선 효과
+      </div>
+      <button class="rcard-cta" onclick="showToast('구매 페이지로 이동')">구매하러 가기 →</button>
+    </div>
+
+    <div class="result-disclaimer">
+      <span>⚠️</span>
+      <span>AI 추천은 입력하신 건강 정보를 기반으로 한 참고용 정보이며, 의료 진단·처방이 아닙니다. 특정 질환이나 복용 중인 약이 있으시면 반드시 전문의와 상담하세요.</span>
+    </div>
+
+    <div class="cta-block">
+      <button class="cta-main" onclick="goTo('screen-login')">
+        이 루틴 저장하고 시작하기 →
+      </button>
+      <button class="cta-skip-to-home" onclick="goToMain()">
+        일단 둘러볼게요
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══ LOGIN ══ -->
+<div class="screen" id="screen-login">
+  <div class="login-top">
+    <div style="font-size:22px;font-weight:800;color:white;">로그인하고<br>루틴을 저장해요</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:6px;">가입하면 건강 데이터가 저장되고<br>매일 루틴 알림을 받을 수 있어요</div>
+    <div class="login-preview-card">
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.8);margin-bottom:10px;">내 추천 루틴 미리보기</div>
+      <div class="preview-rec">
+        <div class="prev-img">⚡</div>
+        <div><div class="prev-name">비타민 B 컴플렉스</div><div class="prev-reason">아침 식후 복용 · 피로 회복</div></div>
+      </div>
+      <div class="preview-rec">
+        <div class="prev-img">⚪</div>
+        <div><div class="prev-name">마그네슘 400mg</div><div class="prev-reason">취침 전 복용 · 수면 개선</div></div>
+      </div>
+      <div class="preview-rec">
+        <div class="prev-img">🌊</div>
+        <div><div class="prev-name">오메가-3</div><div class="prev-reason">점심 식사와 함께 · 피부·집중력</div></div>
+      </div>
+      <div class="blur-overlay">
+        <span>🔒 로그인하고<br>전체 루틴 확인하기</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-bottom">
+    <div class="login-title">로그인 / 회원가입</div>
+    <div class="login-sub">로그인하면 진단 데이터가 자동으로 저장돼요 — 처음 이용하면 자동으로 가입돼요</div>
+
+    <button class="social-btn kakao" onclick="showToast('카카오 로그인')">
+      <div class="social-icon" style="background:#191919;color:#FEE500;">K</div>
+      카카오로 시작하기
+    </button>
+    <button class="social-btn naver" onclick="showToast('네이버 로그인')">
+      <div class="social-icon" style="background:white;color:#03C75A;font-weight:900;">N</div>
+      네이버로 시작하기
+    </button>
+    <button class="social-btn google" onclick="showToast('구글 로그인')">
+      <div class="social-icon">G</div>
+      Google로 시작하기
+    </button>
+
+    <div class="divider"><span>또는</span></div>
+
+    <button class="btn-email" onclick="showToast('이메일 가입')">
+      📧 이메일로 가입하기
+    </button>
+
+    <div class="login-terms">
+      가입 시 <a href="#">이용약관</a> 및 <a href="#">개인정보 처리방침</a>에 동의하게 됩니다.<br>
+      건강 정보는 광고 목적으로 절대 사용되지 않습니다.
+    </div>
+  </div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Navigation ──
+  let currentScreen = 'screen-splash';
+
+  function goTo(id) {
+    const from = document.getElementById(currentScreen);
+    const to = document.getElementById(id);
+    if (!to) return;
+
+    from.classList.add('exit-left');
+    setTimeout(() => { from.classList.remove('active','exit-left'); }, 350);
+
+    to.style.transform = 'translateX(40px)';
+    to.classList.add('active');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { to.style.transform = ''; });
+    });
+
+    currentScreen = id;
+  }
+
+  function goToMain() {
+    window.location.href = 'main_v1.html';
+  }
+
+  // ── Toggle: single select ──
+  function toggleSingle(card, group) {
+    const parent = card.closest('[id$="-grid"], .gender-row');
+    if (parent) {
+      parent.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+    }
+    card.classList.add('selected');
+
+    // Enable next button for this step
+    const stepMap = { diet:'next-step4', sleep:'next-step5', exercise:'next-step6', budget:'next-step9', lifestyle:'next-step10', gender:null };
+    if (stepMap[group]) {
+      const btn = document.getElementById(stepMap[group]);
+      if (btn) {
+        // For step2 check both gender + age
+        if (group === 'gender') checkStep2();
+        else btn.disabled = false;
+      }
+    }
+  }
+
+  // ── Toggle: multi select (max) ──
+  function toggleMulti(card, group, max) {
+    if (card.classList.contains('selected')) {
+      card.classList.remove('selected');
+    } else {
+      const parent = card.closest('[id]');
+      const selected = parent ? parent.querySelectorAll('.option-card.selected').length : 0;
+      if (selected >= max) {
+        showToast(`최대 ${max}개까지 선택할 수 있어요`);
+        return;
+      }
+      card.classList.add('selected');
+    }
+    if (group === 'goals') {
+      const count = document.querySelectorAll('#goals-grid .option-card.selected').length;
+      document.getElementById('next-step1').disabled = count === 0;
+    }
+  }
+
+  // ── Age chip ──
+  function toggleAgeChip(chip) {
+    document.querySelectorAll('.age-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    checkStep2();
+  }
+
+  function checkStep2() {
+    const hasGender = document.querySelector('.gender-row .option-card.selected');
+    const hasAge = document.querySelector('.age-chip.selected');
+    const btn = document.getElementById('next-step2');
+    if (btn) btn.disabled = !(hasGender && hasAge);
+  }
+
+  // ── Toggle switch ──
+  function toggleSwitch(switchId, expandId) {
+    const sw = document.getElementById(switchId);
+    const exp = document.getElementById(expandId);
+    sw.classList.toggle('on');
+    exp.classList.toggle('open');
+  }
+
+  // ── Tag input ──
+  function focusTagInput(inputId) {
+    document.getElementById(inputId).focus();
+  }
+
+  function addTag(e, areaId, inputId) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const input = document.getElementById(inputId);
+      const val = input.value.trim().replace(/,$/, '');
+      if (!val) return;
+      createTagPill(val, areaId, inputId);
+      input.value = '';
+    }
+  }
+
+  function quickAddTag(text, areaId) {
+    const inputId = areaId === 'supp-tag-area' ? 'supp-input' : 'allergy-input';
+    createTagPill(text, areaId, inputId);
+  }
+
+  function createTagPill(text, areaId, inputId) {
+    const area = document.getElementById(areaId);
+    const input = document.getElementById(inputId);
+    // Check duplicate
+    const existing = [...area.querySelectorAll('.tag-pill')].map(p => p.textContent.replace('×','').trim());
+    if (existing.includes(text)) return;
+
+    const pill = document.createElement('span');
+    pill.className = 'tag-pill';
+    pill.innerHTML = `${text}<span class="remove" onclick="removeTag(this)"> ×</span>`;
+    area.insertBefore(pill, input);
+  }
+
+  function removeTag(btn) {
+    btn.closest('.tag-pill').remove();
+  }
+
+  // ── Analysis loading ──
+  function startAnalysis() {
+    // Collect summaries
+    const goals = [...document.querySelectorAll('#goals-grid .option-card.selected')]
+      .map(c => c.querySelector('.opt-label').textContent).join(', ');
+    const diet = document.querySelector('#diet-grid .option-card.selected')?.querySelector('.opt-label')?.textContent || '—';
+    const sleep = document.querySelector('#sleep-grid .option-card.selected')?.querySelector('.opt-label')?.textContent || '—';
+    const exercise = document.querySelector('#exercise-grid .option-card.selected')?.querySelector('.opt-label')?.textContent || '—';
+    const budget = document.querySelector('#budget-grid .option-card.selected')?.querySelector('.opt-label')?.textContent || '—';
+
+    document.getElementById('summary-goals').textContent = goals || '—';
+    document.getElementById('summary-diet').textContent = diet;
+    document.getElementById('summary-sleep').textContent = sleep;
+    document.getElementById('summary-exercise').textContent = exercise;
+    document.getElementById('summary-budget').textContent = budget;
+
+    goTo('screen-loading');
+    runLoadingAnimation();
+  }
+
+  function runLoadingAnimation() {
+    const steps = ['lstep1','lstep2','lstep3','lstep4'];
+    const bar = document.getElementById('loading-bar');
+    const delays = [300, 900, 1700, 2500];
+    const completions = [700, 1400, 2200, 3000];
+
+    steps.forEach((id, i) => {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        el.classList.add('visible');
+      }, delays[i]);
+
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        const spinner = el.querySelector('.l-spinner');
+        const check = el.querySelector('.l-check');
+        if (spinner) spinner.style.display = 'none';
+        if (check) { check.style.display = 'block'; }
+        const pct = ((i + 1) / steps.length * 100) + '%';
+        bar.style.width = pct;
+      }, completions[i]);
+    });
+
+    setTimeout(() => { goTo('screen-result'); }, 3600);
+  }
+
+  // ── Toast ──
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+</script>
+</body>
+</html>

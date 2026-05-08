@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>마이닥터 — AI 건강 파트너</title>
+<style>
+  :root {
+    --green: #2ECC71;
+    --green-light: #E8F8F0;
+    --green-mid: #A8E6C3;
+    --teal: #1ABC9C;
+    --teal-dark: #16A085;
+    --navy: #1A2332;
+    --navy-soft: #2C3E50;
+    --gray-1: #F7F9FC;
+    --gray-2: #EEF2F7;
+    --gray-3: #C8D3E0;
+    --gray-text: #8A97A8;
+    --text: #1A2332;
+    --text-soft: #4A5568;
+    --white: #FFFFFF;
+    --warn: #F59E0B;
+    --warn-light: #FEF3C7;
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --shadow-sm: 0 2px 8px rgba(26,35,50,0.07);
+    --shadow-md: 0 4px 20px rgba(26,35,50,0.10);
+    --shadow-lg: 0 8px 32px rgba(26,35,50,0.13);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', BlinkMacSystemFont, sans-serif;
+    background: var(--gray-1);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--white);
+    padding: 52px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--gray-2);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--teal), var(--green));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .app-name {
+    font-size: 18px; font-weight: 700; color: var(--navy);
+    letter-spacing: -0.3px;
+  }
+  .header-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%; background: var(--gray-1);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: var(--gray-2); }
+  .badge {
+    position: absolute; top: 4px; right: 4px;
+    width: 8px; height: 8px;
+    background: #EF4444; border-radius: 50%;
+    border: 2px solid white;
+  }
+
+  /* ── SCROLL CONTENT ── */
+  .scroll-body {
+    padding-bottom: 90px;
+    overflow-y: auto;
+  }
+
+  /* ── GREETING CARD ── */
+  .greeting-section {
+    background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 50%, var(--green) 100%);
+    padding: 22px 20px 28px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .greeting-section::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -30px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .greeting-section::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: 60px;
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .greeting-date {
+    font-size: 12px; opacity: 0.8; margin-bottom: 4px;
+    font-weight: 500; letter-spacing: 0.5px;
+  }
+  .greeting-text {
+    font-size: 20px; font-weight: 700;
+    line-height: 1.35; margin-bottom: 16px;
+  }
+  .greeting-text span { opacity: 0.85; font-weight: 400; font-size: 16px; display: block; margin-top: 2px; }
+  .streak-row {
+    display: flex; gap: 10px; align-items: center;
+  }
+  .streak-chip {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    backdrop-filter: blur(4px);
+  }
+  .health-score-mini {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── AI NUDGE ── */
+  .section { padding: 20px 20px 0; }
+  .section-title {
+    font-size: 15px; font-weight: 700; color: var(--navy);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-title .label-chip {
+    font-size: 11px; font-weight: 600; color: var(--teal);
+    background: var(--green-light);
+    padding: 3px 8px; border-radius: 20px;
+  }
+
+  .ai-nudge {
+    background: linear-gradient(135deg, #EBF8F5 0%, #E0F5EF 100%);
+    border: 1px solid var(--green-mid);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .ai-avatar {
+    width: 40px; height: 40px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--teal), var(--green));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .ai-bubble .ai-label {
+    font-size: 11px; font-weight: 700; color: var(--teal);
+    margin-bottom: 4px; letter-spacing: 0.3px;
+  }
+  .ai-bubble .ai-msg {
+    font-size: 14px; line-height: 1.6; color: var(--navy-soft);
+    font-weight: 500;
+  }
+  .ai-bubble .ai-basis {
+    margin-top: 8px; font-size: 12px; color: var(--gray-text);
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* ── TODAY'S ROUTINE ── */
+  .routine-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .routine-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--gray-2);
+  }
+  .routine-tab {
+    flex: 1; padding: 12px 8px;
+    text-align: center; font-size: 13px; font-weight: 600;
+    color: var(--gray-text);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+    border: none; background: none;
+  }
+  .routine-tab.active { color: var(--teal); }
+  .routine-tab.active::after {
+    content: '';
+    position: absolute; bottom: 0; left: 20%; right: 20%;
+    height: 2px; background: var(--teal);
+    border-radius: 2px 2px 0 0;
+  }
+  .routine-tab-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+
+  .routine-panel { display: none; padding: 16px; }
+  .routine-panel.active { display: block; }
+
+  .supplement-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 8px;
+  }
+  .supplement-item:last-child { margin-bottom: 0; }
+  .supplement-item:active { background: var(--gray-1); }
+
+  .check-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--gray-3);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    font-size: 14px;
+  }
+  .check-circle.checked {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+  }
+
+  .supplement-img {
+    width: 44px; height: 44px;
+    background: var(--gray-1);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .supplement-info { flex: 1; min-width: 0; }
+  .supplement-name {
+    font-size: 14px; font-weight: 600; color: var(--navy);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .supplement-sub {
+    font-size: 12px; color: var(--gray-text); margin-top: 2px;
+  }
+  .supplement-tags { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+  .tag {
+    font-size: 11px; padding: 2px 7px;
+    border-radius: 6px; font-weight: 500;
+  }
+  .tag-green { background: var(--green-light); color: var(--teal-dark); }
+  .tag-warn { background: var(--warn-light); color: #B45309; }
+  .tag-gray { background: var(--gray-2); color: var(--gray-text); }
+
+  .routine-progress {
+    padding: 12px 16px 16px;
+    border-top: 1px solid var(--gray-2);
+  }
+  .progress-label {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .progress-label span:first-child { font-size: 12px; color: var(--gray-text); font-weight: 500; }
+  .progress-label span:last-child { font-size: 13px; font-weight: 700; color: var(--teal); }
+  .progress-bar-bg {
+    height: 6px; background: var(--gray-2); border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--green));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  /* ── RECOMMENDATION CARDS ── */
+  .rec-scroll {
+    display: flex; gap: 12px;
+    overflow-x: auto;
+    padding: 0 20px 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .rec-scroll::-webkit-scrollbar { display: none; }
+
+  .rec-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 16px;
+    min-width: 220px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 1.5px solid transparent;
+  }
+  .rec-card:active {
+    transform: scale(0.98);
+    box-shadow: var(--shadow-md);
+    border-color: var(--green-mid);
+  }
+  .rec-card-top {
+    display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px;
+  }
+  .rec-product-img {
+    width: 52px; height: 52px;
+    background: var(--gray-1); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .rec-product-info { flex: 1; }
+  .rec-product-name {
+    font-size: 14px; font-weight: 700; color: var(--navy);
+    line-height: 1.3; margin-bottom: 3px;
+  }
+  .rec-brand { font-size: 11px; color: var(--gray-text); }
+  .rec-price { font-size: 14px; font-weight: 700; color: var(--navy); margin-top: 4px; }
+
+  .rec-reason {
+    font-size: 12px; line-height: 1.6; color: var(--navy-soft);
+    background: var(--green-light);
+    border-radius: 8px; padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+  .rec-reason .reason-icon { color: var(--teal); font-weight: 700; }
+
+  .ingredients-row { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ing-chip {
+    font-size: 11px; background: var(--gray-2); color: var(--text-soft);
+    padding: 3px 8px; border-radius: 6px; font-weight: 500;
+  }
+
+  .similar-users {
+    font-size: 12px; color: var(--gray-text);
+    display: flex; align-items: center; gap: 4px; margin-bottom: 12px;
+  }
+  .avatars-mini { display: flex; }
+  .avatars-mini span {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--green-mid); border: 2px solid white;
+    margin-left: -6px; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .avatars-mini span:first-child { margin-left: 0; }
+
+  .rec-cta {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, var(--teal), var(--green));
+    color: white; border: none;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .rec-cta:active { opacity: 0.85; }
+
+  /* ── HEALTH STATS ── */
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-icon { font-size: 22px; margin-bottom: 8px; }
+  .stat-label { font-size: 11px; color: var(--gray-text); font-weight: 500; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 800; color: var(--navy); }
+  .stat-value span { font-size: 12px; font-weight: 500; color: var(--gray-text); }
+  .stat-trend {
+    font-size: 11px; margin-top: 4px;
+    display: flex; align-items: center; gap: 2px;
+  }
+  .trend-up { color: var(--teal); }
+  .trend-down { color: #EF4444; }
+
+  .weekly-chart { display: flex; align-items: flex-end; gap: 4px; height: 36px; margin-top: 8px; }
+  .bar-week {
+    flex: 1; background: var(--gray-2); border-radius: 3px 3px 0 0;
+    transition: height 0.3s;
+    position: relative;
+  }
+  .bar-week.filled { background: linear-gradient(180deg, var(--green), var(--teal)); }
+  .bar-week.today { background: linear-gradient(180deg, var(--teal), var(--teal-dark)); }
+
+  /* ── QUICK ACTIONS ── */
+  .quick-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .quick-item {
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    padding: 14px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform 0.15s;
+    border: none;
+  }
+  .quick-item:active { transform: scale(0.95); }
+  .quick-icon-wrap {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .quick-label { font-size: 11px; font-weight: 600; color: var(--text-soft); text-align: center; line-height: 1.3; }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: var(--white);
+    border-top: 1px solid var(--gray-2);
+    display: flex;
+    padding: 8px 0 20px;
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(26,35,50,0.07);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer;
+    padding: 4px 0;
+    border: none; background: none;
+    transition: color 0.15s;
+    color: var(--gray-3);
+    font-size: 10px; font-weight: 600;
+  }
+  .nav-item.active { color: var(--teal); }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-item .nav-icon { font-size: 22px; }
+
+  /* ── DISCLAIMER ── */
+  .disclaimer {
+    margin: 20px 20px 0;
+    padding: 12px 14px;
+    background: var(--gray-2);
+    border-radius: 10px;
+    font-size: 11px; color: var(--gray-text);
+    line-height: 1.6;
+    display: flex; gap: 6px; align-items: flex-start;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: var(--navy);
+    color: white; font-size: 13px; font-weight: 600;
+    padding: 10px 20px; border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 200;
+  }
+  .toast.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── SECTION SPACING ── */
+  .section + .section { /* handled by padding-top in section */ }
+  .section:last-of-type { padding-bottom: 0; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-mark">🌿</div>
+      <div class="app-name">마이닥터</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="showToast('알림이 없어요')">
+        🔔
+        <div class="badge"></div>
+      </button>
+      <button class="icon-btn" onclick="showToast('프로필 페이지')">👤</button>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-body">
+
+  <!-- GREETING -->
+  <div class="greeting-section">
+    <div class="greeting-date" id="greeting-date">2026년 5월 8일 금요일</div>
+    <div class="greeting-text">
+      이지수 님, 안녕하세요 👋
+      <span>오늘도 건강을 챙겨봐요</span>
+    </div>
+    <div class="streak-row">
+      <div class="streak-chip">🔥 12일 연속 달성</div>
+      <div class="health-score-mini">💚 건강점수 82</div>
+    </div>
+  </div>
+
+  <!-- AI NUDGE -->
+  <div class="section" style="padding-top:20px;">
+    <div class="section-title">
+      AI 코치
+      <span class="label-chip">오늘의 인사이트</span>
+    </div>
+    <div class="ai-nudge">
+      <div class="ai-avatar">🤖</div>
+      <div class="ai-bubble">
+        <div class="ai-label">마이닥터 AI</div>
+        <div class="ai-msg">어제 수면이 5시간 미만이었어요. 오늘은 <strong>마그네슘</strong>을 저녁에 꼭 챙겨보세요 — 수면 개선에 효과적이에요.</div>
+        <div class="ai-basis">💡 내 수면 데이터 기반 추천</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY'S ROUTINE -->
+  <div class="section" style="padding-top:18px;">
+    <div class="section-title">오늘의 루틴</div>
+    <div class="routine-card">
+      <div class="routine-tabs">
+        <button class="routine-tab active" onclick="switchTab(this,'morning')">
+          <span class="routine-tab-icon">🌅</span>아침
+        </button>
+        <button class="routine-tab" onclick="switchTab(this,'lunch')">
+          <span class="routine-tab-icon">☀️</span>점심
+        </button>
+        <button class="routine-tab" onclick="switchTab(this,'evening')">
+          <span class="routine-tab-icon">🌙</span>저녁
+        </button>
+      </div>
+
+      <!-- 아침 -->
+      <div class="routine-panel active" id="panel-morning">
+        <div class="supplement-item" onclick="toggleCheck(this)">
+          <div class="check-circle" data-checked="false">✓</div>
+          <div class="supplement-img">🟡</div>
+          <div class="supplement-info">
+            <div class="supplement-name">비타민 B 컴플렉스</div>
+            <div class="supplement-sub">식후 30분 이내</div>
+            <div class="supplement-tags">
+              <span class="tag tag-green">피로 회복</span>
+              <span class="tag tag-green">집중력</span>
+            </div>
+          </div>
+        </div>
+        <div class="supplement-item" onclick="toggleCheck(this)">
+          <div class="check-circle checked" data-checked="true">✓</div>
+          <div class="supplement-img">🔴</div>
+          <div class="supplement-info">
+            <div class="supplement-name">코엔자임 Q10</div>
+            <div class="supplement-sub">식사와 함께</div>
+            <div class="supplement-tags">
+              <span class="tag tag-green">에너지</span>
+              <span class="tag tag-warn">복용 완료</span>
+            </div>
+          </div>
+        </div>
+        <div class="supplement-item" onclick="toggleCheck(this)">
+          <div class="check-circle" data-checked="false">✓</div>
+          <div class="supplement-img">🟠</div>
+          <div class="supplement-info">
+            <div class="supplement-name">비타민 C 1000mg</div>
+            <div class="supplement-sub">공복 가능</div>
+            <div class="supplement-tags">
+              <span class="tag tag-green">면역</span>
+              <span class="tag tag-green">피부</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 점심 -->
+      <div class="routine-panel" id="panel-lunch">
+        <div class="supplement-item" onclick="toggleCheck(this)">
+          <div class="check-circle" data-checked="false">✓</div>
+          <div class="supplement-img">🟢</div>
+          <div class="supplement-info">
+            <div class="supplement-name">종합 비타민</div>
+            <div class="supplement-sub">식후 바로</div>
+            <div class="supplement-tags">
+              <span class="tag tag-green">전반적 건강</span>
+            </div>
+          </div>
+        </div>
+        <div class="supplement-item" onclick="toggleCheck(this)">
+          <div class="check-circle" data-checked="false">✓</div>
+          <div class="supplement-img">🫐</div>
+          <div class="supplement-info">
+            <div class="supplement-name">루테인</div>
+            <div class="supplement-sub">식후 복용 권장</div>
+            <div class="supplement-tags">
+              <span class="tag tag-green">눈 건강</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 저녁 -->
+      <div class="routine-panel" id="panel-evening">
+        <div class="supplement-item" onclick="toggleCheck(this)">
+          <div class="check-circle" data-checked="false">✓</div>
+          <div class="supplement-img">⚪</div>
+          <div class="supplement-info">
+            <div class="supplement-name">마그네슘 400mg</div>
+            <div class="supplement-sub">취침 1시간 전 권장</div>
+            <div class="supplement-tags">
+              <span class="tag tag-green">수면 개선</span>
+              <span class="tag tag-warn">AI 추천</span>
+            </div>
+          </div>
+        </div>
+        <div class="supplement-item" onclick="toggleCheck(this)">
+          <div class="check-circle" data-checked="false">✓</div>
+          <div class="supplement-img">🟣</div>
+          <div class="supplement-info">
+            <div class="supplement-name">유산균 (프로바이오틱스)</div>
+            <div class="supplement-sub">취침 전 공복</div>
+            <div class="supplement-tags">
+              <span class="tag tag-green">장 건강</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="routine-progress">
+        <div class="progress-label">
+          <span>오늘 진행률</span>
+          <span id="progress-text">1 / 7 완료</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-fill" style="width:14%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <div class="section" style="padding-top:18px;">
+    <div class="section-title">빠른 메뉴</div>
+    <div class="quick-grid">
+      <button class="quick-item" onclick="showToast('AI 건강 Q&A')">
+        <div class="quick-icon-wrap" style="background:#EBF8F5;">🩺</div>
+        <div class="quick-label">AI<br>건강 상담</div>
+      </button>
+      <button class="quick-item" onclick="showToast('월간 건강 리포트')">
+        <div class="quick-icon-wrap" style="background:#FEF3C7;">📊</div>
+        <div class="quick-label">건강<br>리포트</div>
+      </button>
+      <button class="quick-item" onclick="showToast('성분 분석 기능')">
+        <div class="quick-icon-wrap" style="background:#EDE9FE;">🔬</div>
+        <div class="quick-label">성분<br>분석</div>
+      </button>
+      <button class="quick-item" onclick="showToast('전문가 상담 연결')">
+        <div class="quick-icon-wrap" style="background:#FEE2E2;">💊</div>
+        <div class="quick-label">전문가<br>상담</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- HEALTH STATS -->
+  <div class="section" style="padding-top:18px;">
+    <div class="section-title">내 건강 현황</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-label">연속 달성</div>
+        <div class="stat-value">12<span>일</span></div>
+        <div class="stat-trend trend-up">↑ 역대 최고!</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">😴</div>
+        <div class="stat-label">평균 수면</div>
+        <div class="stat-value">5.2<span>h</span></div>
+        <div class="stat-trend trend-down">↓ 개선 필요</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💊</div>
+        <div class="stat-label">이번 주 복용률</div>
+        <div class="stat-value">78<span>%</span></div>
+        <div class="weekly-chart">
+          <div class="bar-week filled" style="height:60%"></div>
+          <div class="bar-week filled" style="height:100%"></div>
+          <div class="bar-week filled" style="height:80%"></div>
+          <div class="bar-week filled" style="height:50%"></div>
+          <div class="bar-week filled" style="height:90%"></div>
+          <div class="bar-week filled" style="height:70%"></div>
+          <div class="bar-week today" style="height:40%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💚</div>
+        <div class="stat-label">건강 점수</div>
+        <div class="stat-value">82<span>점</span></div>
+        <div class="stat-trend trend-up">↑ 지난달 +7</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="section" style="padding-top:18px;">
+    <div class="section-title">
+      AI 추천 영양제
+      <span class="label-chip">내 건강 데이터 기반</span>
+    </div>
+  </div>
+  <div class="rec-scroll">
+
+    <div class="rec-card">
+      <div class="rec-card-top">
+        <div class="rec-product-img">🫁</div>
+        <div class="rec-product-info">
+          <div class="rec-product-name">나우푸드 마그네슘 400mg</div>
+          <div class="rec-brand">NOW Foods</div>
+          <div class="rec-price">₩18,900</div>
+        </div>
+      </div>
+      <div class="rec-reason">
+        <span class="reason-icon">💡</span> 수면 5시간 미만 + 피로 증상 → <strong>마그네슘 결핍</strong> 가능성 높음
+      </div>
+      <div class="ingredients-row">
+        <span class="ing-chip">마그네슘 400mg</span>
+        <span class="ing-chip">산화마그네슘</span>
+      </div>
+      <div class="similar-users">
+        <div class="avatars-mini">
+          <span>👩</span><span>👩</span><span>👩</span>
+        </div>
+        &nbsp;나와 비슷한 직장인 여성 <strong>89%</strong> 효과 체감
+      </div>
+      <button class="rec-cta" onclick="showToast('구매 페이지로 이동')">구매하러 가기 →</button>
+    </div>
+
+    <div class="rec-card">
+      <div class="rec-card-top">
+        <div class="rec-product-img">🌊</div>
+        <div class="rec-product-info">
+          <div class="rec-product-name">오메가-3 고함량 EPA/DHA</div>
+          <div class="rec-brand">닥터베스트</div>
+          <div class="rec-price">₩24,500</div>
+        </div>
+      </div>
+      <div class="rec-reason">
+        <span class="reason-icon">💡</span> 불규칙한 식사 패턴 → <strong>오메가-3 부족</strong> 위험. 피부·집중력 개선에 효과적
+      </div>
+      <div class="ingredients-row">
+        <span class="ing-chip">EPA 600mg</span>
+        <span class="ing-chip">DHA 400mg</span>
+      </div>
+      <div class="similar-users">
+        <div class="avatars-mini">
+          <span>👤</span><span>👩</span><span>👤</span>
+        </div>
+        &nbsp;유사 유저 <strong>76%</strong> 피부 개선 후기
+      </div>
+      <button class="rec-cta" onclick="showToast('구매 페이지로 이동')">구매하러 가기 →</button>
+    </div>
+
+    <div class="rec-card">
+      <div class="rec-card-top">
+        <div class="rec-product-img">🦠</div>
+        <div class="rec-product-info">
+          <div class="rec-product-name">락토핏 생유산균 골드</div>
+          <div class="rec-brand">종근당건강</div>
+          <div class="rec-price">₩15,800</div>
+        </div>
+      </div>
+      <div class="rec-reason">
+        <span class="reason-icon">💡</span> 배달음식 위주 식사 → <strong>장내 유익균 부족</strong>. 소화·면역 기반 강화 필요
+      </div>
+      <div class="ingredients-row">
+        <span class="ing-chip">유산균 200억 CFU</span>
+        <span class="ing-chip">프리바이오틱스</span>
+      </div>
+      <div class="similar-users">
+        <div class="avatars-mini">
+          <span>👩</span><span>👤</span><span>👩</span>
+        </div>
+        &nbsp;유사 유저 <strong>92%</strong> 재구매
+      </div>
+      <button class="rec-cta" onclick="showToast('구매 페이지로 이동')">구매하러 가기 →</button>
+    </div>
+
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    <span>⚠️</span>
+    <span>AI 추천은 입력하신 건강 정보를 기반으로 한 참고용 정보이며, 의료 진단·처방이 아닙니다. 특정 질환이 있으시면 전문의와 상담하세요.</span>
+  </div>
+
+  <div style="height:20px;"></div>
+
+</div><!-- end scroll-body -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="setNav(this)">
+    <span class="nav-icon">🏠</span>홈
+  </button>
+  <button class="nav-item" onclick="setNav(this)">
+    <span class="nav-icon">📋</span>루틴
+  </button>
+  <button class="nav-item" onclick="setNav(this)">
+    <span class="nav-icon">🔍</span>탐색
+  </button>
+  <button class="nav-item" onclick="setNav(this)">
+    <span class="nav-icon">💊</span>영양제
+  </button>
+  <button class="nav-item" onclick="setNav(this)">
+    <span class="nav-icon">👤</span>MY
+  </button>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Date ──
+  const days = ['일','월','화','수','목','금','토'];
+  const now = new Date();
+  document.getElementById('greeting-date').textContent =
+    `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${days[now.getDay()]}요일`;
+
+  // ── Tab switching ──
+  function switchTab(btn, id) {
+    document.querySelectorAll('.routine-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.routine-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + id).classList.add('active');
+  }
+
+  // ── Check toggle ──
+  function toggleCheck(item) {
+    const circle = item.querySelector('.check-circle');
+    const isChecked = circle.dataset.checked === 'true';
+    circle.dataset.checked = String(!isChecked);
+    circle.classList.toggle('checked', !isChecked);
+    updateProgress();
+    if (!isChecked) showToast('✅ 복용 완료!');
+  }
+
+  function updateProgress() {
+    const total = document.querySelectorAll('.check-circle').length;
+    const checked = document.querySelectorAll('.check-circle.checked').length;
+    const pct = Math.round((checked / total) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = `${checked} / ${total} 완료`;
+  }
+
+  // ── Nav ──
+  function setNav(btn) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    btn.classList.add('active');
+    if (!btn.classList.contains('active') || btn.querySelector('.nav-icon').textContent !== '🏠') {
+      showToast('준비 중인 기능이에요');
+    }
+  }
+
+  // ── Toast ──
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  // ── Init ──
+  updateProgress();
+</script>
+</body>
+</html>
